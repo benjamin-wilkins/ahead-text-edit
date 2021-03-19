@@ -25,6 +25,7 @@ class Window(Gtk.Window):
         self.toolbarBox.add(self.saveas)
         
         self.new = Gtk.Button(label="New")
+        self.new.connect("clicked", self.newTab)
         self.toolbarBox.add(self.new)
         
         self.titlebar.add(self.toolbarBox)
@@ -41,13 +42,20 @@ class Window(Gtk.Window):
         self.edit.add(self.tabs)
         
         tab = Tab("")
-        label = TabLabel(tab, "ABC", self.tabs)
+        label = TabLabel(tab, "New", self.tabs)
         self.tabs.append_page(tab, label)
         
         self.left_panel.append_page(self.edit, Gtk.Label(label="Edit"))
         
         self.show_all()
-
+    
+    def newTab(self, widget):
+        print("New tab")
+        tab = Tab("")
+        label = TabLabel(tab, "New", self.tabs)
+        self.tabs.append_page(tab, label)
+        self.show_all()
+    
 class Tab(Gtk.ScrolledWindow):
     def __init__(self, filename):
         Gtk.ScrolledWindow.__init__(self)
@@ -60,7 +68,7 @@ class TabLabel(Gtk.Box):
     def __init__(self, tab, name, notebook):
         Gtk.Box.__init__(self)
         
-        self.label = Gtk.Label(label=name+" ")
+        self.label = Gtk.Label(label=name+"  ")
         self.add(self.label)
         self.notebook = notebook
         self.tab = tab
@@ -70,8 +78,7 @@ class TabLabel(Gtk.Box):
         self.show_all()
     
     def close(self, widget):
-        self.notebook.reorder_child(self.tab, -1)
-        self.notebook.remove_page(-1)
+        self.notebook.remove_page(self.notebook.page_num(self.tab))
 
 window = Window()
 Gtk.main()
