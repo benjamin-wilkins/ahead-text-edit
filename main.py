@@ -1,6 +1,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+import os
 
 class Window(Gtk.Window):
     def __init__(self):
@@ -16,6 +17,7 @@ class Window(Gtk.Window):
         Gtk.StyleContext.add_class(self.toolbarBox.get_style_context(), "linked")
         
         self.open = Gtk.Button(label="Open")
+        self.open.connect("clicked", self.openTab)
         self.toolbarBox.add(self.open)
         
         self.save = Gtk.Button(label="Save")
@@ -50,17 +52,37 @@ class Window(Gtk.Window):
         self.show_all()
     
     def newTab(self, widget):
-        print("New tab")
         tab = Tab("")
         label = TabLabel(tab, "New", self.tabs)
         self.tabs.append_page(tab, label)
         self.show_all()
     
+    def openTab(self, widget):
+        dialogue = Gtk.FileChooserDialog(title="Open", parent=self, action=Gtk.FileChooserAction.OPEN)
+        dialogue.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
+        responses = dialogue.run()
+        if responses == Gtk.ResponseType.OK:
+            try:
+                filename = dialogue.get_filename()
+                tab = Tab(filename)
+                label = TabLabel(tab, os.path.split(filename)[1], self.tabs)
+                self.tabs.append_page(tab, label)
+            except UnicodeDecodeError:
+                pass
+        dialogue.destroy()
+        self.show_all()
+
 class Tab(Gtk.ScrolledWindow):
     def __init__(self, filename):
         Gtk.ScrolledWindow.__init__(self)
+        
+        self.buffer = Gtk.TextBuffer()
+        if not filename == "":
+            with open(filename, "r") as f:
+                self.buffer.set_text(f.read())
 
         self.text = Gtk.TextView()
+        self.text.set_buffer(self.buffer)
         self.text.set_monospace(True)
         self.add(self.text)
 
