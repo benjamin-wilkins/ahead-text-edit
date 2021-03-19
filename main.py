@@ -8,6 +8,29 @@ class Window(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.set_size_request(600, 400)
         
+        self.titlebar = Gtk.HeaderBar()
+        self.titlebar.set_show_close_button(True)
+        self.titlebar.props.title = "Ahead"
+        
+        self.toolbarBox = Gtk.HBox()
+        Gtk.StyleContext.add_class(self.toolbarBox.get_style_context(), "linked")
+        
+        self.open = Gtk.Button(label="Open")
+        self.toolbarBox.add(self.open)
+        
+        self.save = Gtk.Button(label="Save")
+        self.toolbarBox.add(self.save)
+        
+        self.saveas = Gtk.Button(label="Save As")
+        self.toolbarBox.add(self.saveas)
+        
+        self.new = Gtk.Button(label="New")
+        self.toolbarBox.add(self.new)
+        
+        self.titlebar.add(self.toolbarBox)
+        
+        self.set_titlebar(self.titlebar)
+        
         self.left_panel = Gtk.Notebook()
         self.left_panel.set_tab_pos(Gtk.PositionType.LEFT)
         self.add(self.left_panel)
@@ -15,24 +38,18 @@ class Window(Gtk.Window):
         
         self.tabs = Gtk.Notebook(expand=True)
         self.tabs.set_scrollable(True)
-        self.tabs.connect("change-current-page", self.change_page)
         self.edit.add(self.tabs)
+        
+        tab = Tab("")
+        label = TabLabel(tab, "ABC", self.tabs)
+        self.tabs.append_page(tab, label)
         
         self.left_panel.append_page(self.edit, Gtk.Label(label="Edit"))
         
-        self.tab = Tab(self.tabs, "Tab")
-        self.label = TabLabel(self.tab, "Tab", self.tabs)
-        self.tabs.append_page(self.tab, self.label)
-        
-        self.tabs.append_page(Gtk.VBox(), Gtk.Image.new_from_icon_name("help-about", 1))
-        
         self.show_all()
-    
-    def change_page(self, notebook, num):
-        print(num)
 
 class Tab(Gtk.ScrolledWindow):
-    def __init__(self, notebook, name):
+    def __init__(self, filename):
         Gtk.ScrolledWindow.__init__(self)
 
         self.text = Gtk.TextView()
