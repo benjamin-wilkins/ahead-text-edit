@@ -9,6 +9,7 @@ class Window(Gtk.Window):
         Gtk.Window.__init__(self, title="Ahead")
         self.connect("destroy", Gtk.main_quit)
         self.set_size_request(600, 400)
+        self.set_icon_name("accessories-text-editor")
         
         self.titlebar = Gtk.HeaderBar()
         self.titlebar.set_show_close_button(True)
