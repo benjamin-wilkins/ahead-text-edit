@@ -24,6 +24,7 @@ class Window(Gtk.Window):
         self.toolbarBox.add(self.save)
         
         self.saveas = Gtk.Button(label="Save As")
+        self.saveas.connect("clicked", self.saveasTab)
         self.toolbarBox.add(self.saveas)
         
         self.new = Gtk.Button(label="New")
@@ -43,18 +44,16 @@ class Window(Gtk.Window):
         self.tabs.set_scrollable(True)
         self.edit.add(self.tabs)
         
-        tab = Tab("")
-        label = TabLabel(tab, "New", self.tabs)
-        self.tabs.append_page(tab, label)
+        tab = Tab("", self.tabs)
+        self.tabs.append_page(tab, tab.label)
         
         self.left_panel.append_page(self.edit, Gtk.Label(label="Edit"))
         
         self.show_all()
     
     def newTab(self, widget):
-        tab = Tab("")
-        label = TabLabel(tab, "New", self.tabs)
-        self.tabs.append_page(tab, label)
+        tab = Tab("", self.tabs)
+        self.tabs.append_page(tab, tab.label)
         self.show_all()
     
     def openTab(self, widget):
@@ -71,16 +70,35 @@ class Window(Gtk.Window):
                 pass
         dialogue.destroy()
         self.show_all()
+    
+    def saveasTab(self, widget):
+        dialogue = Gtk.FileChooserDialog(title="Save As", parent=self, action=Gtk.FileChooserAction.SAVE)
+        dialogue.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
+        responses = dialogue.run()
+        if responses == Gtk.ResponseType.OK:
+            filename = dialogue.get_filename()
+            tab = self.tabs.get_nth_page(self.tabs.get_current_page())
+            tab.filename = filename
+            tab.label = TabLabel(tab, filename, self.tabs)
+            self.tabs.set_tab_label(tab, tab.label)
+            with open(filename, "w") as f: 
+                f.write(tab.buffer.get_text(tab.buffer.get_start_iter(), tab.buffer.get_end_iter(), True))
+        dialogue.destroy()
+        self.show_all()
 
 class Tab(Gtk.ScrolledWindow):
-    def __init__(self, filename):
+    def __init__(self, filename, notebook):
         Gtk.ScrolledWindow.__init__(self)
         
         self.buffer = Gtk.TextBuffer()
         if not filename == "":
             with open(filename, "r") as f:
                 self.buffer.set_text(f.read())
-
+            self.label = TabLabel(self, filename, notebook)
+        else:
+            self.label = TabLabel(self, "New", notebook)
+        
+        self.filename = filename
         self.text = Gtk.TextView()
         self.text.set_buffer(self.buffer)
         self.text.set_monospace(True)
@@ -90,7 +108,7 @@ class TabLabel(Gtk.Box):
     def __init__(self, tab, name, notebook):
         Gtk.Box.__init__(self)
         
-        self.label = Gtk.Label(label=name+"  ")
+        self.label = Gtk.Label(label=name+" ")
         self.add(self.label)
         self.notebook = notebook
         self.tab = tab
