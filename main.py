@@ -1,6 +1,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+gi.require_version('Vte', '2.91')
+from gi.repository import Gtk, Vte, GLib
 import os
 
 class Window(Gtk.Window):
@@ -64,9 +65,8 @@ class Window(Gtk.Window):
         if responses == Gtk.ResponseType.OK:
             try:
                 filename = dialogue.get_filename()
-                tab = Tab(filename)
-                label = TabLabel(tab, os.path.split(filename)[1], self.tabs)
-                self.tabs.append_page(tab, label)
+                tab = Tab(filename, self.tabs)
+                self.tabs.append_page(tab, tab.label)
             except UnicodeDecodeError:
                 pass
         dialogue.destroy()
@@ -96,10 +96,11 @@ class Window(Gtk.Window):
                 f.write(tab.buffer.get_text(tab.buffer.get_start_iter(), tab.buffer.get_end_iter(), True))
             self.show_all()
 
-class Tab(Gtk.ScrolledWindow):
+class Tab(Gtk.Grid):
     def __init__(self, filename, notebook):
-        Gtk.ScrolledWindow.__init__(self)
+        Gtk.Grid.__init__(self)
         
+        self.scroll = Gtk.ScrolledWindow()
         self.buffer = Gtk.TextBuffer()
         if not filename == "":
             with open(filename, "r") as f:
@@ -112,7 +113,27 @@ class Tab(Gtk.ScrolledWindow):
         self.text = Gtk.TextView()
         self.text.set_buffer(self.buffer)
         self.text.set_monospace(True)
-        self.add(self.text)
+        self.scroll.add(self.text)
+        self.scroll.set_vexpand(True)
+        self.scroll.set_hexpand(True)
+        self.attach(self.scroll, 0, 0, 2, 2)
+        
+        self.terminal = Vte.Terminal()
+        self.pty = Vte.Pty.new_sync(Vte.PtyFlags.DEFAULT)
+        self.pty.set_utf8(True)
+        self.terminal.set_pty(self.pty)
+        self.pty.spawn_async(
+                os.environ["HOME"],
+                ["/bin/sh"],
+                None,
+                GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                None,
+                None,
+                -1,
+                None,
+                lambda x, y: x
+                )
+        self.attach(self.terminal, 0, 2, 2, 1)
 
 class TabLabel(Gtk.Box):
     def __init__(self, tab, name, notebook):
