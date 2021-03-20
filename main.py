@@ -21,6 +21,7 @@ class Window(Gtk.Window):
         self.toolbarBox.add(self.open)
         
         self.save = Gtk.Button(label="Save")
+        self.save.connect("clicked", self.saveTab)
         self.toolbarBox.add(self.save)
         
         self.saveas = Gtk.Button(label="Save As")
@@ -85,6 +86,15 @@ class Window(Gtk.Window):
                 f.write(tab.buffer.get_text(tab.buffer.get_start_iter(), tab.buffer.get_end_iter(), True))
         dialogue.destroy()
         self.show_all()
+    
+    def saveTab(self, widget):
+        tab = self.tabs.get_nth_page(self.tabs.get_current_page())
+        if tab.filename == "":
+            self.saveasTab(widget)
+        else:
+            with open(tab.filename, "w") as f:
+                f.write(tab.buffer.get_text(tab.buffer.get_start_iter(), tab.buffer.get_end_iter(), True))
+            self.show_all()
 
 class Tab(Gtk.ScrolledWindow):
     def __init__(self, filename, notebook):
